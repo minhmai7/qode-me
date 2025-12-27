@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,29 +7,72 @@ datasource db {
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
-  username      String    @unique @db.VarChar(50)
-  email         String    @unique @db.VarChar(255)
-  passwordHash  String    @map("password_hash")
-  avatarUrl     String?   @map("avatar_url")
-  totalScore    Int       @default(0) @map("total_score")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  
-  attempts      UserAttempt[]
-  
+  id           Int           @id @default(autoincrement())
+  username     String        @unique @db.VarChar(50)
+  email        String        @unique @db.VarChar(255)
+  passwordHash String        @map("password_hash")
+  avatarUrl    String?       @map("avatar_url")
+  totalScore   Int           @default(0) @map("total_score")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  attempts     UserAttempt[]
+
   @@map("users")
 }
 
 model Category {
-  id          Int       @id @default(autoincrement())
-  name        String    @db.VarChar(100)
-  description String?   @db.Text
-  icon        String?   @db.VarChar(50)
-  slug        String    @unique @db.VarChar(100)
-  
+  id          Int        @id @default(autoincrement())
+  name        String     @db.VarChar(100)
+  description String?
+  icon        String?    @db.VarChar(50)
+  slug        String     @unique @db.VarChar(100)
   questions   Question[]
-  
+
   @@map("categories")
+}
+
+model Question {
+  id           Int            @id @default(autoincrement())
+  categoryId   Int            @map("category_id")
+  title        String         @db.VarChar(255)
+  description  String
+  questionType QuestionType   @map("question_type")
+  difficulty   Difficulty
+  codeSnippet  String?        @map("code_snippet")
+  language     String?        @db.VarChar(50)
+  points       Int            @default(10)
+  createdAt    DateTime       @default(now()) @map("created_at")
+  options      AnswerOption[]
+  category     Category       @relation(fields: [categoryId], references: [id])
+  attempts     UserAttempt[]
+
+  @@map("questions")
+}
+
+model AnswerOption {
+  id          Int           @id @default(autoincrement())
+  questionId  Int           @map("question_id")
+  optionText  String        @map("option_text")
+  isCorrect   Boolean       @default(false) @map("is_correct")
+  optionOrder Int           @map("option_order")
+  question    Question      @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  attempts    UserAttempt[]
+
+  @@map("answer_options")
+}
+
+model UserAttempt {
+  id               Int           @id @default(autoincrement())
+  userId           Int           @map("user_id")
+  questionId       Int           @map("question_id")
+  selectedAnswerId Int?          @map("selected_answer_id")
+  isCorrect        Boolean       @map("is_correct")
+  timeTaken        Int?          @map("time_taken")
+  attemptedAt      DateTime      @default(now()) @map("attempted_at")
+  question         Question      @relation(fields: [questionId], references: [id])
+  selectedAnswer   AnswerOption? @relation(fields: [selectedAnswerId], references: [id])
+  user             User          @relation(fields: [userId], references: [id])
+
+  @@map("user_attempts")
 }
 
 enum QuestionType {
@@ -45,51 +86,3 @@ enum Difficulty {
   MEDIUM
   HARD
 }
-
-model Question {
-  id           Int          @id @default(autoincrement())
-  categoryId   Int          @map("category_id")
-  title        String       @db.VarChar(255)
-  description  String       @db.Text
-  questionType QuestionType @map("question_type")
-  difficulty   Difficulty
-  codeSnippet  String?      @map("code_snippet") @db.Text
-  language     String?      @db.VarChar(50)
-  points       Int          @default(10)
-  createdAt    DateTime     @default(now()) @map("created_at")
-  
-  category     Category     @relation(fields: [categoryId], references: [id])
-  options      AnswerOption[]
-  attempts     UserAttempt[]
-  
-  @@map("questions")
-}
-
-model AnswerOption {
-  id          Int      @id @default(autoincrement())
-  questionId  Int      @map("question_id")
-  optionText  String   @map("option_text") @db.Text
-  isCorrect   Boolean  @default(false) @map("is_correct")
-  optionOrder Int      @map("option_order")
-  
-  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  attempts    UserAttempt[]
-  
-  @@map("answer_options")
-}
-
-model UserAttempt {
-  id               Int      @id @default(autoincrement())
-  userId           Int      @map("user_id")
-  questionId       Int      @map("question_id")
-  selectedAnswerId Int?     @map("selected_answer_id")
-  isCorrect        Boolean  @map("is_correct")
-  timeTaken        Int?     @map("time_taken")
-  attemptedAt      DateTime @default(now()) @map("attempted_at")
-  
-  user           User          @relation(fields: [userId], references: [id])
-  question       Question      @relation(fields: [questionId], references: [id])
-  selectedAnswer AnswerOption? @relation(fields: [selectedAnswerId], references: [id])
-  
-  @@map("user_attempts")
-}  
