@@ -92,9 +92,6 @@ export default function ManualImportPage() {
                                         <option value="javascript">JavaScript</option>
                                         <option value="python">Python</option>
                                         <option value="java">Java</option>
-                                        <option value="react">React</option>
-                                        <option value="nodejs">Node.js</option>
-                                        <option value="typescript">TypeScript</option>
                                         <option value="css">CSS</option>
                                         <option value="html">HTML</option>
                                     </select>
