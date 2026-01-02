@@ -2,11 +2,30 @@
 
 import { useState } from 'react';
 
+type ImportSuccessResult = {
+    success: true;
+    total: number;
+    imported: number;
+    failed: number;
+    errors?: string[];
+};
+
+type ImportErrorResult = {
+    error: string;
+    details?: unknown;
+};
+
+type ImportResult = ImportSuccessResult | ImportErrorResult;
+
+function isImportErrorResult(result: ImportResult): result is ImportErrorResult {
+    return 'error' in result;
+}
+
 export default function ManualImportPage() {
     const [jsonInput, setJsonInput] = useState('');
     const [category, setCategory] = useState('javascript');
     const [loading, setLoading] = useState(false);
-    const [result, setResult] = useState<any>(null);
+    const [result, setResult] = useState<ImportResult | null>(null);
 
     const exampleJson = `[
   {
@@ -38,10 +57,10 @@ export default function ManualImportPage() {
                 body: JSON.stringify({ questions, category }),
             });
 
-            const data = await response.json();
+            const data = (await response.json()) as ImportResult;
             setResult(data);
 
-            if (data.success) {
+            if ('success' in data && data.success) {
                 setJsonInput('');
             }
         }
@@ -54,8 +73,8 @@ export default function ManualImportPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-navy-900 to-slate-800">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-indigo-950 text-slate-100">
+            <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="text-center mb-10">
                     <h1 className="text-4xl font-bold text-white mb-3">
@@ -67,12 +86,12 @@ export default function ManualImportPage() {
                 </div>
                 
                 {/* Main Import Form */}
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl rounded-2xl p-8 mb-8">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-8 shadow-sm mb-8">
                     <div className="grid md:grid-cols-2 gap-8">
                         {/* Left Column - Form */}
                         <div>
                             <h2 className="text-2xl font-semibold text-white mb-6 flex items-center">
-                                <svg className="w-6 h-6 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-6 h-6 mr-2 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                 </svg>
                                 Import Configuration
@@ -87,7 +106,7 @@ export default function ManualImportPage() {
                                         id="category"
                                         value={category}
                                         onChange={(e) => setCategory(e.target.value)}
-                                        className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                        className="w-full rounded-lg border border-white/10 bg-slate-950/40 px-4 py-3 text-white placeholder-slate-400 outline-none ring-indigo-500/30 focus:ring-2 transition"
                                     >
                                         <option value="javascript">JavaScript</option>
                                         <option value="python">Python</option>
@@ -107,11 +126,11 @@ export default function ManualImportPage() {
                                         value={jsonInput}
                                         onChange={(e) => setJsonInput(e.target.value)}
                                         placeholder={exampleJson}
-                                        className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm transition-all resize-none"
+                                        className="w-full resize-none rounded-lg border border-white/10 bg-slate-950/40 px-4 py-3 font-mono text-sm text-slate-100 placeholder-slate-500 outline-none ring-indigo-500/30 focus:ring-2 transition"
                                     />
                                     <div className="mt-2 flex justify-between items-center text-sm text-slate-400">
                                         <span>Paste your JSON questions here</span>
-                                        <span className="bg-slate-700 px-2 py-1 rounded text-xs">
+                                        <span className="rounded bg-white/5 px-2 py-1 text-xs ring-1 ring-white/10">
                                             {jsonInput.length} characters
                                         </span>
                                     </div>
@@ -120,7 +139,7 @@ export default function ManualImportPage() {
                                 <button
                                     onClick={handleImport}
                                     disabled={loading || !jsonInput.trim()}
-                                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-slate-600 disabled:to-slate-700 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 disabled:cursor-not-allowed shadow-lg hover:shadow-xl flex items-center justify-center"
+                                    className="flex w-full items-center justify-center rounded-lg bg-indigo-600 px-6 py-4 font-semibold text-white shadow-sm transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
                                 >
                                     {loading ? (
                                         <>
@@ -145,45 +164,45 @@ export default function ManualImportPage() {
                         {/* Right Column - Format Guide */}
                         <div>
                             <h2 className="text-2xl font-semibold text-white mb-6 flex items-center">
-                                <svg className="w-6 h-6 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-6 h-6 mr-2 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                                 Format Guide
                             </h2>
                             
-                            <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-600/50">
+                            <div className="rounded-xl border border-white/10 bg-slate-950/30 p-6">
                                 <h3 className="text-lg font-semibold text-slate-200 mb-4">JSON Structure</h3>
-                                <pre className="bg-slate-900/50 p-4 rounded-lg text-sm overflow-x-auto text-slate-300 font-mono border border-slate-600/30">
+                                <pre className="overflow-x-auto rounded-lg border border-white/10 bg-slate-950/40 p-4 font-mono text-sm text-slate-300">
 {exampleJson}
                                 </pre>
                             </div>
 
-                            <div className="mt-6 bg-slate-800/30 rounded-xl p-6 border border-slate-600/50">
+                            <div className="mt-6 rounded-xl border border-white/10 bg-slate-950/30 p-6">
                                 <h3 className="text-lg font-semibold text-slate-200 mb-4">Field Requirements</h3>
                                 <div className="space-y-3">
                                     <div className="flex items-start">
-                                        <span className="bg-blue-500/20 text-blue-300 text-xs px-2 py-1 rounded mr-3 mt-0.5 font-mono">title</span>
+                                        <span className="rounded bg-indigo-600/15 px-2 py-1 text-xs font-mono text-indigo-100 ring-1 ring-indigo-400/30 mr-3 mt-0.5">title</span>
                                         <div>
                                             <span className="text-slate-200 font-medium">Question Text</span>
                                             <p className="text-slate-400 text-sm">Required - Main question content</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start">
-                                        <span className="bg-green-500/20 text-green-300 text-xs px-2 py-1 rounded mr-3 mt-0.5 font-mono">options</span>
+                                        <span className="rounded bg-indigo-600/15 px-2 py-1 text-xs font-mono text-indigo-100 ring-1 ring-indigo-400/30 mr-3 mt-0.5">options</span>
                                         <div>
                                             <span className="text-slate-200 font-medium">Answer Options</span>
                                             <p className="text-slate-400 text-sm">2-6 options, exactly 1 correct</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start">
-                                        <span className="bg-yellow-500/20 text-yellow-300 text-xs px-2 py-1 rounded mr-3 mt-0.5 font-mono">difficulty</span>
+                                        <span className="rounded bg-indigo-600/15 px-2 py-1 text-xs font-mono text-indigo-100 ring-1 ring-indigo-400/30 mr-3 mt-0.5">difficulty</span>
                                         <div>
                                             <span className="text-slate-200 font-medium">Difficulty Level</span>
                                             <p className="text-slate-400 text-sm">EASY, MEDIUM, or HARD</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start">
-                                        <span className="bg-purple-500/20 text-purple-300 text-xs px-2 py-1 rounded mr-3 mt-0.5 font-mono">description</span>
+                                        <span className="rounded bg-indigo-600/15 px-2 py-1 text-xs font-mono text-indigo-100 ring-1 ring-indigo-400/30 mr-3 mt-0.5">description</span>
                                         <div>
                                             <span className="text-slate-200 font-medium">Description</span>
                                             <p className="text-slate-400 text-sm">Optional - Additional context</p>
@@ -197,13 +216,13 @@ export default function ManualImportPage() {
 
                 {/* Results Section */}
                 {result && (
-                    <div className={`bg-white/10 backdrop-blur-md border rounded-2xl p-8 shadow-2xl ${
-                        result.error 
-                            ? 'border-red-400/50 bg-red-900/20' 
-                            : 'border-green-400/50 bg-green-900/20'
+                    <div className={`rounded-2xl border p-8 shadow-sm ${
+                        isImportErrorResult(result)
+                            ? 'border-red-400/30 bg-red-500/10' 
+                            : 'border-emerald-400/30 bg-emerald-500/10'
                     }`}>
                         <div className="flex items-center mb-6">
-                            {result.error ? (
+                            {isImportErrorResult(result) ? (
                                 <svg className="w-8 h-8 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
@@ -213,15 +232,15 @@ export default function ManualImportPage() {
                                 </svg>
                             )}
                             <h2 className="text-2xl font-semibold text-white">
-                                {result.error ? 'Import Failed' : 'Import Complete'}
+                                {isImportErrorResult(result) ? 'Import Failed' : 'Import Complete'}
                             </h2>
                         </div>
                         
-                        {result.error ? (
+                        {isImportErrorResult(result) ? (
                             <div className="space-y-4">
                                 <div className="bg-red-900/30 border border-red-700/50 rounded-lg p-4">
                                     <p className="text-red-200 font-medium">{result.error}</p>
-                                    {result.details && (
+                                    {result.details != null && (
                                         <pre className="mt-3 text-sm bg-red-800/30 p-3 rounded text-red-100 overflow-x-auto">
                                             {JSON.stringify(result.details, null, 2)}
                                         </pre>
@@ -249,7 +268,7 @@ export default function ManualImportPage() {
                                     <div className="bg-yellow-900/20 border border-yellow-700/50 rounded-lg p-4">
                                         <h3 className="text-yellow-200 font-semibold mb-2">Import Errors:</h3>
                                         <ul className="space-y-1">
-                                            {result.errors.map((error: string, index: number) => (
+                                            {result.errors.map((error, index) => (
                                                 <li key={index} className="text-yellow-100 text-sm flex items-start">
                                                     <span className="text-yellow-400 mr-2">•</span>
                                                     {error}

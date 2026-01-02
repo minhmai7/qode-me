@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { Difficulty, QuestionType } from '@prisma/client';
-import { ca } from 'zod/locales';
+import { Difficulty, Prisma, QuestionType } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
     try {
@@ -11,7 +10,7 @@ export async function GET(request: NextRequest) {
         const difficulty = searchParams.get('difficulty') as Difficulty | null;
         const limit = parseInt(searchParams.get('limit') || '10');
 
-        const where: any = {
+        const where: Prisma.QuestionWhereInput = {
             questionType: QuestionType.MULTIPLE_CHOICE
         }
 

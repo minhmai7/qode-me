@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
 
         let imported = 0
         let failed = 0
-        const errors: String[] = []
+        const errors: string[] = []
 
         for (const q of validated.questions) {
             try {
@@ -71,9 +71,10 @@ export async function POST(request: NextRequest) {
                 })
                 imported++
             } 
-            catch (error: any) {
+            catch (error: unknown) {
                 failed++
-                errors.push(`Failed to import question '${q.title}': ${error.message}`);
+                const message = error instanceof Error ? error.message : 'Unknown error';
+                errors.push(`Failed to import question '${q.title}': ${message}`);
             }
         }
 
