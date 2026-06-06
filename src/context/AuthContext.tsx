@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@/types';
 
 function safeParseUser(value: string | null): User | null {
@@ -31,16 +31,23 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+type AuthState = {
+    user: User | null;
+    token: string | null;
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(() => {
-        if (typeof window === 'undefined') return null;
-        return safeParseUser(safeGetLocalStorageItem('user'));
-    });
-    const [token, setToken] = useState<string | null>(() => {
-        if (typeof window === 'undefined') return null;
-        return safeGetLocalStorageItem('token');
-    });
+    // Important: keep the *initial* render identical between server and client.
+    // We hydrate from localStorage after mount to avoid React hydration mismatches.
+    const [authState, setAuthState] = useState<AuthState>({ user: null, token: null });
     const [isLoading] = useState(false);
+
+    useEffect(() => {
+        const hydratedUser = safeParseUser(safeGetLocalStorageItem('user'));
+        const hydratedToken = safeGetLocalStorageItem('token');
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setAuthState({ user: hydratedUser, token: hydratedToken });
+    }, []);
 
     const register = async (username: string, email: string, password: string) => {
         const response = await fetch('/api/auth/register', {
@@ -58,8 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const data = await response.json();
 
-        setUser(data.user);
-        setToken(data.token);
+        setAuthState({ user: data.user, token: data.token });
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
     };
@@ -80,15 +86,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         const data = await response.json();
 
-        setUser(data.user);
-        setToken(data.token);
+        setAuthState({ user: data.user, token: data.token });
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
     };
 
     const logout = () => {
-        setUser(null);
-        setToken(null);
+        setAuthState({ user: null, token: null });
         localStorage.removeItem('token');
         localStorage.removeItem('user');
     };
@@ -100,12 +104,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return (
         <AuthContext.Provider
             value={{
-                user,
-                token,
+                user: authState.user,
+                token: authState.token,
                 login,
                 register,
                 logout,
-                isAuthenticated: !!user,
+                isAuthenticated: !!authState.user,
             }}
         >
             {children}
